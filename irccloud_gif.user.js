@@ -10,8 +10,10 @@
 // @match https://www.irccloud.com/*
 // @match https://irccloud.mozilla.com/*
 // @noframes
+// @grant none
 // ==/UserScript==
 
+(function() {
 function getGIF(words) {
   return new Promise(function(resolve, reject) {
     var req = new XMLHttpRequest();
@@ -36,15 +38,32 @@ var _COMMANDS = {
   gif: getGIF
 };
 
-var _oldsay = unsafeWindow.SESSIONVIEW.mainArea.current.input.__proto__.say;
-unsafeWindow.SESSIONVIEW.mainArea.current.input.__proto__.say = function(m) {
-  var cmd = m.split(' ')[0].substr(1);
-  if (m.startsWith('/') && _COMMANDS.hasOwnProperty(cmd)) {
-    this.clear();
-    _COMMANDS[cmd](m.substr(cmd.length + 2)).then((newmsg) => {
-      _oldsay.apply(this, [newmsg]);
-    });
-  } else {
-    _oldsay.apply(this, [m]);
-  }
+function init() {
+  var _oldsay = window.SESSIONVIEW.mainArea.current.input.__proto__.say;
+  window.SESSIONVIEW.mainArea.current.input.__proto__.say = function(m) {
+    var cmd = m.split(' ')[0].substr(1);
+    if (m.startsWith('/') && _COMMANDS.hasOwnProperty(cmd)) {
+      this.clear();
+      _COMMANDS[cmd](m.substr(cmd.length + 2)).then((newmsg) => {
+        _oldsay.apply(this, [newmsg]);
+      });
+    } else {
+      _oldsay.apply(this, [m]);
+    }
+  };
 }
+(function checkSession() {
+  if (window.hasOwnProperty('SESSION')) {
+    if (window.SESSION.initialized) {
+      init();
+    } else {
+      window.SESSION.bind('init', function () {
+        init();
+      });
+    }
+  } else {
+    window.setTimeout(checkSession, 100);
+  }
+})();
+
+})();
