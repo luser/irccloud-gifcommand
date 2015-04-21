@@ -44,8 +44,9 @@ function init() {
     var cmd = m.split(' ')[0].substr(1);
     if (m.startsWith('/') && _COMMANDS.hasOwnProperty(cmd)) {
       this.clear();
-      _COMMANDS[cmd](m.substr(cmd.length + 2)).then((newmsg) => {
-        _oldsay.apply(this, [newmsg]);
+      var self = this;
+      _COMMANDS[cmd](m.substr(cmd.length + 2)).then(function (newmsg) {
+        _oldsay.apply(self, [newmsg]);
       });
     } else {
       _oldsay.apply(this, [m]);
